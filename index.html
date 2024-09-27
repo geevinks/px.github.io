@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Цветное поле</title>
+    <title>Pixel Art Multiplayer</title>
     <style>
         body {
             margin: 0;
@@ -15,7 +15,7 @@
             padding: 10px;
             background-color: #f0f0f0;
             position: relative;
-            z-index: 10; /* Поверх остальных элементов */
+            z-index: 10;
         }
         .color-box {
             width: 30px;
@@ -30,9 +30,8 @@
             grid-template-rows: repeat(100, 10px);
             touch-action: pan-x pan-y;
             position: relative;
-            top: 10px; /* Установите отступ сверху для палитры */
-            transform-origin: 0 0; /* Установка точки отсчета для масштабирования */
-            z-index: 1; /* Под палитрой */
+            transform-origin: 0 0;
+            z-index: 1;
         }
         .cell {
             width: 10px;
@@ -43,7 +42,7 @@
     </style>
 </head>
 <body>
-    <div class="palette">
+    <div class="palette" id="palette">
         <div class="color-box" style="background-color: red;"></div>
         <div class="color-box" style="background-color: orange;"></div>
         <div class="color-box" style="background-color: yellow;"></div>
@@ -58,17 +57,25 @@
     <div class="grid" id="grid"></div>
 
     <script>
+        const grid = document.getElementById('grid');
+        const palette = document.getElementById('palette');
+
         let selectedColor = 'white';
+        const cells = {};
+        let scale = 1;
 
         // Создание игрового поля
-        const grid = document.getElementById('grid');
         for (let i = 0; i < 100 * 100; i++) {
             const cell = document.createElement('div');
             cell.classList.add('cell');
+            cell.dataset.index = i; // Запоминаем индекс клетки
+            cell.style.backgroundColor = 'white'; // Начальный цвет клетки
             cell.addEventListener('click', () => {
                 cell.style.backgroundColor = selectedColor;
+                sendUpdate(i, selectedColor); // Отправляем обновление
             });
             grid.appendChild(cell);
+            cells[i] = cell; // Сохраняем ссылку на клетки
         }
 
         // Добавление функциональности для выбора цвета
@@ -80,12 +87,10 @@
 
         // Свайп для перемещения и изменения масштаба
         let startX, startY;
-        let scale = 1;
-
         grid.addEventListener('touchstart', (e) => {
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
-            e.preventDefault(); // предотвращаем прокрутку страницы
+            e.preventDefault();
         });
 
         grid.addEventListener('touchmove', (e) => {
@@ -94,19 +99,28 @@
             grid.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(${scale})`;
         });
 
-        grid.addEventListener('touchend', (e) => {
-            // Можно добавлять функциональность для масштабирования здесь
-            // Например, с помощью двух пальцев
-            if (e.touches.length === 2) {
-                const distance = Math.sqrt(
+        // Установка WebSocket для общения между клиентами
+        const ws = new WebSocket('ws://your-websocket-server-address'); // Укажите адрес вашего WebSocket сервера
 
-                    Math.pow(e.touches[1].clientX - e.touches[0].clientX, 2) +
-                    Math.pow(e.touches[1].clientY - e.touches[0].clientY, 2)
-                );
-                scale *= distance / 100; // Измените масштабирование по вашему усмотрению
-                grid.style.transform = `scale(${scale})`;
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.action === 'update') {
+                const cell = cells[data.index];
+                if (cell) {
+                    cell.style.backgroundColor = data.color;
+                }
             }
-        });
+        };
+
+        // Отправка обновлений на сервер
+        function sendUpdate(index, color) {
+            const data = {
+                action: 'update',
+                index: index,
+                color: color
+            };
+            ws.send(JSON.stringify(data));
+        }
     </script>
 </body>
 </html>
