@@ -10,6 +10,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            overflow: hidden; /* Запрет на прокрутку */
         }
         #palette {
             display: flex;
@@ -39,7 +40,6 @@
             display: grid;
             grid-template-columns: repeat(100, 10px);
             grid-template-rows: repeat(100, 10px);
-            transition: transform 0.1s; /* Плавный переход */
         }
         .cell {
             width: 10px;
@@ -104,17 +104,14 @@
 
             lastX += dx;
             lastY += dy;
+
+            // Ограничение перемещения
+            lastX = Math.min(0, lastX);
+            lastY = Math.min(0, lastY);
+            lastX = Math.max(lastX, window.innerWidth - grid.offsetWidth);
+            lastY = Math.max(lastY, window.innerHeight - grid.offsetHeight);
+
             grid.style.transform = `translate(${lastX}px, ${lastY}px)`;
-        });
-
-        // Обновление масштаба с помощью колеса мыши (можно отменить)
-        grid.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            const scale = Math.exp(e.deltaY * -0.001);
-            const newTransform = grid.style.transform || 'translate(0,0) scale(1)';
-
-            const [translateX, translateY] = newTransform.match(/translate\(([^,]+), ([0-9-]+)\)/).slice(1).map(x => parseFloat(x));
-            grid.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
         });
     </script>
 </body>
