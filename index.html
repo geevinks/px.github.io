@@ -13,6 +13,7 @@
             align-items: center;
             background-color: #e0e0e0;
             height: 100vh;
+            overflow: hidden; /* Убираем прокрутку */
         }
         .palette {
             display: flex;
@@ -34,12 +35,16 @@
         .color-box:hover {
             transform: scale(1.1);
         }
+        .grid-container {
+            overflow: auto; /* Позволим полю прокручиваться, если оно слишком большое */
+            width: 80vw; /* Ширина контейнера с полем */
+            height: 80vh; /* Высота контейнера с полем */
+            border: 2px solid #000; /* Граница контейнера */
+        }
         .grid {
             display: grid;
             grid-template-columns: repeat(100, 10px);
             grid-template-rows: repeat(100, 10px);
-            position: relative;
-            z-index: 1;
             cursor: crosshair;
         }
         .cell {
@@ -65,7 +70,9 @@
         <div class="color-box" style="background-color: white;"></div>
     </div>
 
-    <div class="grid" id="grid"></div>
+    <div class="grid-container" id="grid-container">
+        <div class="grid" id="grid"></div>
+    </div>
 
     <script>
         const grid = document.getElementById('grid');
@@ -84,10 +91,8 @@
                 cell.classList.add('cell');
                 cell.dataset.index = i;
                 cell.style.backgroundColor = savedColors[i];
-                cell.addEventListener('mouseover', (e) => {
-                    if (isDrawing && e.target.classList.contains('cell')) {
-                        drawOnCell(e.target);
-                    }
+                cell.addEventListener('mousedown', (e) => {
+                    drawOnCell(cell);
                 });
                 grid.appendChild(cell);
                 cells[i] = cell;
@@ -98,6 +103,7 @@
         document.querySelectorAll('.color-box').forEach(box => {
             box.addEventListener('click', () => {
                 selectedColor = box.style.backgroundColor;
+
             });
         });
 
@@ -106,7 +112,6 @@
             if (e.target.classList.contains('cell')) {
                 isDrawing = true;
                 drawOnCell(e.target);
-
             }
         });
 
@@ -118,28 +123,13 @@
             isDrawing = false;
         });
 
-        grid.addEventListener('touchstart', (e) => {
-            if (e.target.classList.contains('cell')) {
-                isDrawing = true;
-                drawOnCell(e.target);
-            }
-        });
-
-        grid.addEventListener('touchmove', (e) => {
-            if (isDrawing && e.target.classList.contains('cell')) {
-                drawOnCell(e.target);
-            }
-            e.preventDefault(); // предотвращаем прокрутку на мобильных устройствах
-        });
-
-        grid.addEventListener('touchend', () => {
-            isDrawing = false;
-        });
+        // Убираем обработчики touch для мобильных устройств, чтобы не происходило свайпирование.
 
         // Функция для рисования на клетке
         function drawOnCell(cell) {
             cell.style.backgroundColor = selectedColor;
             updateLocalStorage(cell.dataset.index, selectedColor);
+            sendUpdate(cell.dataset.index, selectedColor); // Отправляем обновление всем клиентам
         }
 
         // Обновление localStorage
@@ -147,6 +137,29 @@
             const savedColors = JSON.parse(localStorage.getItem('pixelArtColors')) || new Array(gridSize * gridSize).fill('white');
             savedColors[index] = color;
             localStorage.setItem('pixelArtColors', JSON.stringify(savedColors));
+        }
+
+        // Установка WebSocket для общения между клиентами
+        const ws = new WebSocket('ws://your-websocket-server-address'); // Укажите адрес вашего WebSocket сервера
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.action === 'update') {
+                const cell = cells[data.index];
+                if (cell) {
+                    cell.style.backgroundColor = data.color;
+                }
+            }
+        };
+
+        // Отправка обновлений на сервер
+        function sendUpdate(index, color) {
+            const data = {
+                action: 'update',
+                index: index,
+                color: color
+            };
+            ws.send(JSON.stringify(data));
         }
 
         // Инициализация поля
