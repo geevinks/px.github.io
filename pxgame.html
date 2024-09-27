@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Игра с цветными квадратиками</title>
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+        #controls {
+            display: flex;
+            flex-direction: column;
+            margin-right: 20px;
+        }
+        #colorPalette {
+            display: grid;
+            grid-template-columns: repeat(2, 30px);
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        .color {
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            border: 3px solid black; /* Рамка для каждого цвета */
+            box-sizing: border-box; /* Включаем рамку в размер элемента */
+        }
+        #gameContainer {
+            width: 1000px;
+            height: 1000px;
+            overflow: hidden; /* Убирает прокрутку */
+            position: relative; /* Для позиционирования внутри */
+            border: 2px solid #ccc;
+        }
+        #gameBoard {
+            display: grid;
+            grid-template-columns: repeat(100, 10px);
+            grid-template-rows: repeat(100, 10px);
+            transition: transform 0.1s;
+            position: absolute;
+            top: 0; /* Убрали вертикальное центрирование */
+            left: 0; /* Убрали горизонтальное центрирование */
+        }
+        .cell {
+            border: 1px solid #ccc;
+            background-color: white;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div id="controls">
+    <div id="colorPalette">
+        <div class="color" style="background-color: #FF0000;" data-color="#FF0000"></div>
+        <div class="color" style="background-color: #FFFF00;" data-color="#FFFF00"></div>
+        
+        <div class="color" style="background-color: #FF7F7F;" data-color="#FF7F7F"></div>
+        <div class="color" style="background-color: #FFFF7F;" data-color="#FFFF7F"></div>
+
+        <div class="color" style="background-color: #FFB2B2;" data-color="#FFB2B2"></div>
+        <div class="color" style="background-color: #FFFFB2;" data-color="#FFFFB2"></div>
+
+        <div class="color" style="background-color: #1E5945;" data-color="#1E5945"></div>
+        <div class="color" style="background-color: #007FFF;" data-color="#007FFF"></div>
+
+        <div class="color" style="background-color: #00FF00;" data-color="#00FF00"></div>
+        <div class="color" style="background-color: #00BFFF;" data-color="#00BFFF"></div>
+
+        <div class="color" style="background-color: #7FFF7F;" data-color="#7FFF7F"></div>
+        <div class="color" style="background-color: #00FFFF;" data-color="#00FFFF"></div>
+
+        <div class="color" style="background-color: #800080;" data-color="#800080"></div>
+        <div class="color" style="background-color: #000000;" data-color="#000000"></div>
+
+        <div class="color" style="background-color: #FF1493;" data-color="#FF1493"></div>
+        <div class="color" style="background-color: #808080;" data-color="#808080"></div>
+
+        <div class="color" style="background-color: #FF69B4;" data-color="#FF69B4"></div>
+        <div class="color" style="background-color: #FFFFFF;" data-color="#FFFFFF"></div>
+
+    </div>
+    <button id="zoomIn">+</button>
+    <button id="zoomOut">-</button>
+</div>
+
+<div id="gameContainer">
+    <div id="gameBoard"></div>
+</div>
+
+<script>
+    const colors = document.querySelectorAll('.color');
+    const cells = [];
+    let selectedColor = '#FFFFFF';
+    let zoomLevel = 1;
+    let isDragging = false;
+    let startX, startY;
+    let offsetX = 0; // Добавлена переменная для смещения по оси X
+    let offsetY = 0; // Добавлена переменная для смещения по оси Y
+
+    // Заполнение игрового поля
+    const gameBoard = document.getElementById('gameBoard');
+    for (let i = 0; i < 10000; i++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        cell.addEventListener('click', function() {
+            cell.style.backgroundColor = selectedColor;
+        });
+        gameBoard.appendChild(cell);
+        cells.push(cell);
+    }
+
+    // Выбор цвета
+    colors.forEach(color => {
+        color.addEventListener('click', function() {
+            selectedColor = this.getAttribute('data-color');
+        });
+    });
+
+    // Управление приближением
+    document.getElementById('zoomIn').addEventListener('click', function() {
+        if (zoomLevel < 2) {
+            zoomLevel += 0.1;
+            gameBoard.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${zoomLevel})`;
+        }
+    });
+
+    document.getElementById('zoomOut').addEventListener('click', function() {
+        if (zoomLevel > 0.5) {
+            zoomLevel -= 0.1;
+            gameBoard.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${zoomLevel})`;
+        }
+    });
+
+    // Приближение с помощью колесика мыши
+    gameContainer.addEventListener('wheel', function(event) {
+        event.preventDefault();
+        if (event.deltaY < 0) {
+            zoomLevel = Math.min(2, zoomLevel + 0.1);
+        } else {
+            zoomLevel = Math.max(0.5, zoomLevel - 0.1);
+        }
+        gameBoard.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${zoomLevel})`;
+    });
+
+    // Перемещение игрового поля при удерживании и перемещении мыши
+    gameBoard.addEventListener('mousedown', function(event) {
+
+        isDragging = true;
+        startX = event.clientX;
+        startY = event.clientY;
+        gameBoard.style.cursor = 'grabbing';
+    });
+
+    window.addEventListener('mousemove', function(event) {
+        if (isDragging) {
+            const dx = event.clientX - startX;
+            const dy = event.clientY - startY;
+            offsetX += dx; // Обновляем смещение по X
+            offsetY += dy; // Обновляем смещение по Y
+            gameBoard.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${zoomLevel})`; // Применяем смещение
+            startX = event.clientX;
+            startY = event.clientY;
+        }
+    });
+
+    window.addEventListener('mouseup', function() {
+        isDragging = false;
+        gameBoard.style.cursor = 'grab';
+    });
+</script>
+
+</body>
+</html>
