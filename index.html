@@ -13,21 +13,21 @@
         }
         #palette {
             display: flex;
-            gap: 10px; /* Расстояние между цветами */
+            gap: 10px;
             position: fixed;
             top: 0;
             background: white;
             z-index: 1;
-            padding: 10px; /* Отступы вокруг палитры */
-            border-radius: 10px; /* Закруглённые углы для палитры */
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2); /* Тень для эффекта */
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
         .color {
             width: 30px;
             height: 30px;
             cursor: pointer;
-            border-radius: 5px; /* Закруглённые углы для каждого цвета */
-            border: 2px solid #ddd; /* Граница для цветов */
+            border-radius: 5px;
+            border: 2px solid #ddd;
         }
         #container {
             touch-action: pan;
@@ -40,7 +40,6 @@
             display: grid;
             grid-template-columns: repeat(100, 10px);
             grid-template-rows: repeat(100, 10px);
-            transition: transform 0.1s; /* Плавный переход */
         }
         .cell {
             width: 10px;
@@ -99,15 +98,17 @@
         });
 
         grid.addEventListener('touchend', (e) => {
+            const dx = e.changedTouches[0].clientX - startX;
+            const dy = e.changedTouches[0].clientY - startY;
+
             if (e.changedTouches.length > 1) {
-                scale = e.changedTouches[0].clientY / startY; // Масштабирование
+                scale *= e.changedTouches[0].clientY / startY; // Масштабирование
             } else {
-                lastX += e.changedTouches[0].clientX - startX;
-                lastY += e.changedTouches[0].clientY - startY;
+                lastX += dx;
+                lastY += dy;
             }
             grid.style.transform = `translate(${lastX}px, ${lastY}px) scale(${scale})`;
         });
     </script>
 </body>
 </html>
-
