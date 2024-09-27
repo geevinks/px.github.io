@@ -40,6 +40,7 @@
             width: 80vw; /* Ширина контейнера с полем */
             height: 80vh; /* Высота контейнера с полем */
             border: 2px solid #000; /* Граница контейнера */
+            position: relative;
         }
         .grid {
             display: grid;
@@ -80,7 +81,7 @@
 
         let selectedColor = 'white';
         const cells = [];
-        const gridSize = 100;
+        const gridSize = 100; // Размер сетки
         let isDrawing = false;
 
         // Создание игрового поля и инициализация цветовой матрицы
