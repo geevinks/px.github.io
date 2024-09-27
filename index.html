@@ -3,183 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Игра с цветными квадратиками</title>
+    <title>Цветная Игра</title>
     <style>
         body {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            font-family: Arial, sans-serif;
-        }
-        #controls {
+            margin: 0;
             display: flex;
             flex-direction: column;
-            margin-right: 20px;
+            align-items: center;
         }
-        #colorPalette {
-            display: grid;
-            grid-template-columns: repeat(2, 30px);
-            gap: 5px;
-            margin-bottom: 10px;
+        #palette {
+            display: flex;
+            margin: 10px 0;
+            position: fixed;  /* Закрепляем палитру */
+            top: 0;
+            background: white;
+            z-index: 1;  /* Поверх игрового поля */
         }
         .color {
             width: 30px;
             height: 30px;
             cursor: pointer;
-            border: 3px solid black; /* Рамка для каждого цвета */
-            box-sizing: border-box; /* Включаем рамку в размер элемента */
         }
-        #gameContainer {
-            width: 30px;
-            height: 30px;
-            overflow: hidden; /* Убирает прокрутку */
-            position: relative; /* Для позиционирования внутри */
-            border: 2px solid #ccc;
+        #container {
+            touch-action: pan;
+            width: 100%;  /* Заполняет всю ширину экрана */
+            height: 100%; /* Высота контейнера */
+            overflow: hidden; /* Обрезаем содержимое */
+            position: relative;
         }
-        #gameBoard {
+        #grid {
             display: grid;
             grid-template-columns: repeat(100, 10px);
             grid-template-rows: repeat(100, 10px);
-            transition: transform 0.1s;
-            position: absolute;
-            top: 0; /* Убрали вертикальное центрирование */
-            left: 0; /* Убрали горизонтальное центрирование */
+            transform-origin: top left;
         }
         .cell {
-            border: 1px solid #ccc;
-            background-color: white;
-            cursor: pointer;
+            width: 10px;
+            height: 10px;
+            background: white;
+            border: 1px solid #ddd;
         }
     </style>
 </head>
 <body>
-
-<div id="controls">
-    <div id="colorPalette">
-        <div class="color" style="background-color: #FF0000;" data-color="#FF0000"></div>
-        <div class="color" style="background-color: #FFFF00;" data-color="#FFFF00"></div>
-        
-        <div class="color" style="background-color: #FF7F7F;" data-color="#FF7F7F"></div>
-        <div class="color" style="background-color: #FFFF7F;" data-color="#FFFF7F"></div>
-
-        <div class="color" style="background-color: #FFB2B2;" data-color="#FFB2B2"></div>
-        <div class="color" style="background-color: #FFFFB2;" data-color="#FFFFB2"></div>
-
-        <div class="color" style="background-color: #1E5945;" data-color="#1E5945"></div>
-        <div class="color" style="background-color: #007FFF;" data-color="#007FFF"></div>
-
-        <div class="color" style="background-color: #00FF00;" data-color="#00FF00"></div>
-        <div class="color" style="background-color: #00BFFF;" data-color="#00BFFF"></div>
-
-        <div class="color" style="background-color: #7FFF7F;" data-color="#7FFF7F"></div>
-        <div class="color" style="background-color: #00FFFF;" data-color="#00FFFF"></div>
-
-        <div class="color" style="background-color: #800080;" data-color="#800080"></div>
-        <div class="color" style="background-color: #000000;" data-color="#000000"></div>
-
-        <div class="color" style="background-color: #FF1493;" data-color="#FF1493"></div>
-        <div class="color" style="background-color: #808080;" data-color="#808080"></div>
-
-        <div class="color" style="background-color: #FF69B4;" data-color="#FF69B4"></div>
-        <div class="color" style="background-color: #FFFFFF;" data-color="#FFFFFF"></div>
-
+    <div id="palette">
+        <div class="color" style="background: red;"></div>
+        <div class="color" style="background: orange;"></div>
+        <div class="color" style="background: yellow;"></div>
+        <div class="color" style="background: green;"></div>
+        <div class="color" style="background: blue;"></div>
+        <div class="color" style="background: violet;"></div>
+        <div class="color" style="background: black;"></div>
+        <div class="color" style="background: gray;"></div>
+        <div class="color" style="background: white;"></div>
     </div>
-    <button id="zoomIn">+</button>
-    <button id="zoomOut">-</button>
-</div>
+    <div id="container">
+        <div id="grid"></div>
+    </div>
 
-<div id="gameContainer">
-    <div id="gameBoard"></div>
-</div>
+    <script>
+        const colors = document.querySelectorAll('.color');
+        const grid = document.getElementById('grid');
+        let selectedColor = 'white';
 
-<script>
-    const colors = document.querySelectorAll('.color');
-    const cells = [];
-    let selectedColor = '#FFFFFF';
-    let zoomLevel = 1;
-    let isDragging = false;
-    let startX, startY;
-    let offsetX = 0; // Добавлена переменная для смещения по оси X
-    let offsetY = 0; // Добавлена переменная для смещения по оси Y
-
-    // Заполнение игрового поля
-    const gameBoard = document.getElementById('gameBoard');
-    for (let i = 0; i < 10000; i++) {
-        const cell = document.createElement('div');
-        cell.classList.add('cell');
-        cell.addEventListener('click', function() {
-            cell.style.backgroundColor = selectedColor;
+        colors.forEach(color => {
+            color.addEventListener('click', () => {
+                selectedColor = color.style.background;
+            });
         });
-        gameBoard.appendChild(cell);
-        cells.push(cell);
-    }
 
-    // Выбор цвета
-    colors.forEach(color => {
-        color.addEventListener('click', function() {
-            selectedColor = this.getAttribute('data-color');
+        for (let i = 0; i < 10000; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.addEventListener('click', () => {
+                cell.style.background = selectedColor;
+            });
+            grid.appendChild(cell);
+        }
+
+        let startX, startY, scale = 1;
+        grid.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
         });
-    });
 
-    // Управление приближением
-    document.getElementById('zoomIn').addEventListener('click', function() {
-        if (zoomLevel < 2) {
-            zoomLevel += 0.1;
-            gameBoard.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${zoomLevel})`;
-        }
-    });
+        grid.addEventListener('touchmove', (e) => {
+            const dx = e.touches[0].clientX - startX;
+            const dy = e.touches[0].clientY - startY;
+            grid.style.transform = `translate(${dx}px, ${dy}px) scale(${scale})`;
+        });
 
-    document.getElementById('zoomOut').addEventListener('click', function() {
-        if (zoomLevel > 0.5) {
-            zoomLevel -= 0.1;
-            gameBoard.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${zoomLevel})`;
-        }
-    });
-
-    // Приближение с помощью колесика мыши
-    gameContainer.addEventListener('wheel', function(event) {
-        event.preventDefault();
-        if (event.deltaY < 0) {
-            zoomLevel = Math.min(2, zoomLevel + 0.1);
-        } else {
-            zoomLevel = Math.max(0.5, zoomLevel - 0.1);
-        }
-        gameBoard.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${zoomLevel})`;
-    });
-
-    // Перемещение игрового поля при удерживании и перемещении мыши
-    gameBoard.addEventListener('mousedown', function(event) {
-
-        isDragging = true;
-        startX = event.clientX;
-        startY = event.clientY;
-        gameBoard.style.cursor = 'grabbing';
-    });
-
-    window.addEventListener('mousemove', function(event) {
-        if (isDragging) {
-            const dx = event.clientX - startX;
-            const dy = event.clientY - startY;
-            offsetX += dx; // Обновляем смещение по X
-            offsetY += dy; // Обновляем смещение по Y
-            gameBoard.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${zoomLevel})`; // Применяем смещение
-            startX = event.clientX;
-            startY = event.clientY;
-        }
-    });
-
-    window.addEventListener('mouseup', function() {
-        isDragging = false;
-        gameBoard.style.cursor = 'grab';
-    });
-
-    gameContainer.addEventListener('touchstart', function(event) {
-        isDragging = true;
-        startX = event.touches[0].clientX;
-        startY = event.touches[0].clientY;
-    });
-</script>
-
+        grid.addEventListener('touchend', (e) => {
+            if (e.changedTouches.length > 1) {
+                scale = e.changedTouches[0].clientY / startY; // Примерный масштаб
+                grid.style.transform = `scale(${scale})`;
+            }
+        });
+    </script>
 </body>
 </html>
