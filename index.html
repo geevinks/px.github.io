@@ -13,29 +13,34 @@
         }
         #palette {
             display: flex;
-            margin: 10px 0;
-            position: fixed;  /* Закрепляем палитру */
+            gap: 10px; /* Расстояние между цветами */
+            position: fixed;
             top: 0;
             background: white;
-            z-index: 1;  /* Поверх игрового поля */
+            z-index: 1;
+            padding: 10px; /* Отступы вокруг палитры */
+            border-radius: 10px; /* Закруглённые углы для палитры */
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2); /* Тень для эффекта */
         }
         .color {
             width: 30px;
             height: 30px;
             cursor: pointer;
+            border-radius: 5px; /* Закруглённые углы для каждого цвета */
+            border: 2px solid #ddd; /* Граница для цветов */
         }
         #container {
             touch-action: pan;
-            width: 100%;  /* Заполняет всю ширину экрана */
-            height: 100%; /* Высота контейнера */
-            overflow: hidden; /* Обрезаем содержимое */
+            width: 100%;
+            height: 80vh; 
+            overflow: hidden;
             position: relative;
         }
         #grid {
             display: grid;
             grid-template-columns: repeat(100, 10px);
             grid-template-rows: repeat(100, 10px);
-            transform-origin: top left;
+            transition: transform 0.1s; /* Плавный переход */
         }
         .cell {
             width: 10px;
@@ -81,7 +86,7 @@
             grid.appendChild(cell);
         }
 
-        let startX, startY, scale = 1;
+        let startX, startY, lastX = 0, lastY = 0, scale = 1;
         grid.addEventListener('touchstart', (e) => {
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
@@ -90,15 +95,19 @@
         grid.addEventListener('touchmove', (e) => {
             const dx = e.touches[0].clientX - startX;
             const dy = e.touches[0].clientY - startY;
-            grid.style.transform = `translate(${dx}px, ${dy}px) scale(${scale})`;
+            grid.style.transform = `translate(${lastX + dx}px, ${lastY + dy}px) scale(${scale})`;
         });
 
         grid.addEventListener('touchend', (e) => {
             if (e.changedTouches.length > 1) {
-                scale = e.changedTouches[0].clientY / startY; // Примерный масштаб
-                grid.style.transform = `scale(${scale})`;
+                scale = e.changedTouches[0].clientY / startY; // Масштабирование
+            } else {
+                lastX += e.changedTouches[0].clientX - startX;
+                lastY += e.changedTouches[0].clientY - startY;
             }
+            grid.style.transform = `translate(${lastX}px, ${lastY}px) scale(${scale})`;
         });
     </script>
 </body>
 </html>
+
