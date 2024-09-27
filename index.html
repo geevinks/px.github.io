@@ -3,35 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel Art Multiplayer</title>
+    <title>Pixel Art</title>
     <style>
         body {
             margin: 0;
-            overflow: hidden;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #e0e0e0;
+            height: 100vh;
         }
         .palette {
             display: flex;
             justify-content: center;
             padding: 10px;
-            background-color: #f0f0f0;
+            background-color: #f8f8f8;
             position: relative;
             z-index: 10;
         }
         .color-box {
-            width: 30px;
-            height: 30px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
             margin: 0 5px;
             cursor: pointer;
-            border: 1px solid #000;
+            border: 2px solid #000;
+            transition: transform 0.2s;
+        }
+        .color-box:hover {
+            transform: scale(1.1);
         }
         .grid {
             display: grid;
             grid-template-columns: repeat(100, 10px);
             grid-template-rows: repeat(100, 10px);
-            touch-action: pan-x pan-y;
             position: relative;
-            transform-origin: 0 0;
             z-index: 1;
+            cursor: crosshair;
         }
         .cell {
             width: 10px;
@@ -42,6 +51,7 @@
     </style>
 </head>
 <body>
+
     <div class="palette" id="palette">
         <div class="color-box" style="background-color: red;"></div>
         <div class="color-box" style="background-color: orange;"></div>
@@ -54,6 +64,7 @@
         <div class="color-box" style="background-color: gray;"></div>
         <div class="color-box" style="background-color: white;"></div>
     </div>
+
     <div class="grid" id="grid"></div>
 
     <script>
@@ -61,66 +72,85 @@
         const palette = document.getElementById('palette');
 
         let selectedColor = 'white';
-        const cells = {};
-        let scale = 1;
+        const cells = [];
+        const gridSize = 100;
+        let isDrawing = false;
 
-        // Создание игрового поля
-        for (let i = 0; i < 100 * 100; i++) {
-            const cell = document.createElement('div');
-            cell.classList.add('cell');
-            cell.dataset.index = i; // Запоминаем индекс клетки
-            cell.style.backgroundColor = 'white'; // Начальный цвет клетки
-            cell.addEventListener('click', () => {
-                cell.style.backgroundColor = selectedColor;
-                sendUpdate(i, selectedColor); // Отправляем обновление
-            });
-            grid.appendChild(cell);
-            cells[i] = cell; // Сохраняем ссылку на клетки
+        // Создание игрового поля и инициализация цветовой матрицы
+        function initializeGrid() {
+            const savedColors = JSON.parse(localStorage.getItem('pixelArtColors')) || new Array(gridSize * gridSize).fill('white');
+            for (let i = 0; i < gridSize * gridSize; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.dataset.index = i;
+                cell.style.backgroundColor = savedColors[i];
+                cell.addEventListener('mouseover', (e) => {
+                    if (isDrawing && e.target.classList.contains('cell')) {
+                        drawOnCell(e.target);
+                    }
+                });
+                grid.appendChild(cell);
+                cells[i] = cell;
+            }
         }
 
-        // Добавление функциональности для выбора цвета
+        // Добавление функциональности выбора цвета
         document.querySelectorAll('.color-box').forEach(box => {
             box.addEventListener('click', () => {
                 selectedColor = box.style.backgroundColor;
             });
         });
 
-        // Свайп для перемещения и изменения масштаба
-        let startX, startY;
+        // Обработчики событий для рисования
+        grid.addEventListener('mousedown', (e) => {
+            if (e.target.classList.contains('cell')) {
+                isDrawing = true;
+                drawOnCell(e.target);
+
+            }
+        });
+
+        grid.addEventListener('mouseup', () => {
+            isDrawing = false;
+        });
+
+        grid.addEventListener('mouseleave', () => {
+            isDrawing = false;
+        });
+
         grid.addEventListener('touchstart', (e) => {
-            startX = e.touches[0].clientX;
-            startY = e.touches[0].clientY;
-            e.preventDefault();
+            if (e.target.classList.contains('cell')) {
+                isDrawing = true;
+                drawOnCell(e.target);
+            }
         });
 
         grid.addEventListener('touchmove', (e) => {
-            let deltaX = e.touches[0].clientX - startX;
-            let deltaY = e.touches[0].clientY - startY;
-            grid.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(${scale})`;
+            if (isDrawing && e.target.classList.contains('cell')) {
+                drawOnCell(e.target);
+            }
+            e.preventDefault(); // предотвращаем прокрутку на мобильных устройствах
         });
 
-        // Установка WebSocket для общения между клиентами
-        const ws = new WebSocket('ws://your-websocket-server-address'); // Укажите адрес вашего WebSocket сервера
+        grid.addEventListener('touchend', () => {
+            isDrawing = false;
+        });
 
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            if (data.action === 'update') {
-                const cell = cells[data.index];
-                if (cell) {
-                    cell.style.backgroundColor = data.color;
-                }
-            }
-        };
-
-        // Отправка обновлений на сервер
-        function sendUpdate(index, color) {
-            const data = {
-                action: 'update',
-                index: index,
-                color: color
-            };
-            ws.send(JSON.stringify(data));
+        // Функция для рисования на клетке
+        function drawOnCell(cell) {
+            cell.style.backgroundColor = selectedColor;
+            updateLocalStorage(cell.dataset.index, selectedColor);
         }
+
+        // Обновление localStorage
+        function updateLocalStorage(index, color) {
+            const savedColors = JSON.parse(localStorage.getItem('pixelArtColors')) || new Array(gridSize * gridSize).fill('white');
+            savedColors[index] = color;
+            localStorage.setItem('pixelArtColors', JSON.stringify(savedColors));
+        }
+
+        // Инициализация поля
+        initializeGrid();
     </script>
 </body>
 </html>
