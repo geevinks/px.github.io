@@ -30,9 +30,9 @@
             grid-template-rows: repeat(100, 10px);
             touch-action: pan-x pan-y;
             position: relative;
-            top: 0; /* Установите значение top, чтобы обеспечить правильное положение */
+            top: 10px; /* Установите отступ сверху для палитры */
             transform-origin: 0 0; /* Установка точки отсчета для масштабирования */
-            z-index: 1; /*Под палитрой */
+            z-index: 1; /* Под палитрой */
         }
         .cell {
             width: 10px;
@@ -97,6 +97,15 @@
         grid.addEventListener('touchend', (e) => {
             // Можно добавлять функциональность для масштабирования здесь
             // Например, с помощью двух пальцев
+            if (e.touches.length === 2) {
+                const distance = Math.sqrt(
+
+                    Math.pow(e.touches[1].clientX - e.touches[0].clientX, 2) +
+                    Math.pow(e.touches[1].clientY - e.touches[0].clientY, 2)
+                );
+                scale *= distance / 100; // Измените масштабирование по вашему усмотрению
+                grid.style.transform = `scale(${scale})`;
+            }
         });
     </script>
 </body>
