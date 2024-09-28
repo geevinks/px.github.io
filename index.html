@@ -3,168 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel Art</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background-color: #e0e0e0;
-            height: 100vh;
-            overflow: hidden; /* Убираем прокрутку */
-        }
-        .palette {
-            display: flex;
-            justify-content: center;
-            padding: 10px;
-            background-color: #f8f8f8;
-            position: relative;
-            z-index: 10;
-        }
-        .color-box {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            margin: 0 5px;
-            cursor: pointer;
-            border: 2px solid #000;
-            transition: transform 0.2s;
-        }
-        .color-box:hover {
-            transform: scale(1.1);
-        }
-        .grid-container {
-            overflow: auto; /* Позволим полю прокручиваться, если оно слишком большое */
-            width: 80vw; /* Ширина контейнера с полем */
-            height: 80vh; /* Высота контейнера с полем */
-            border: 2px solid #000; /* Граница контейнера */
-            position: relative;
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(100, 10px);
-            grid-template-rows: repeat(100, 10px);
-            cursor: crosshair;
-        }
-        .cell {
-            width: 10px;
-            height: 10px;
-            background-color: white;
-            border: 1px solid #ddd;
-        }
-    </style>
+    <title>Pixel Art Game</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
-    <div class="palette" id="palette">
-        <div class="color-box" style="background-color: red;"></div>
-        <div class="color-box" style="background-color: orange;"></div>
-        <div class="color-box" style="background-color: yellow;"></div>
-        <div class="color-box" style="background-color: green;"></div>
-        <div class="color-box" style="background-color: blue;"></div>
-        <div class="color-box" style="background-color: indigo;"></div>
-        <div class="color-box" style="background-color: violet;"></div>
-        <div class="color-box" style="background-color: black;"></div>
-        <div class="color-box" style="background-color: gray;"></div>
-        <div class="color-box" style="background-color: white;"></div>
+    <div id="container">
+        <div id="palette">
+            <div class="color" style="background-color: red;" onclick="selectColor('red')"></div>
+            <div class="color" style="background-color: green;" onclick="selectColor('green')"></div>
+            <div class="color" style="background-color: blue;" onclick="selectColor('blue')"></div>
+            <div class="color" style="background-color: yellow;" onclick="selectColor('yellow')"></div>
+            <div class="color" style="background-color: black;" onclick="selectColor('black')"></div>
+            <div class="color" style="background-color: white;" onclick="selectColor('white')"></div>
+        </div>
+        <div id="grid"></div>
     </div>
 
-    <div class="grid-container" id="grid-container">
-        <div class="grid" id="grid"></div>
-    </div>
-
-    <script>
-        const grid = document.getElementById('grid');
-        const palette = document.getElementById('palette');
-
-        let selectedColor = 'white';
-        const cells = [];
-        const gridSize = 100; // Размер сетки
-        let isDrawing = false;
-
-        // Создание игрового поля и инициализация цветовой матрицы
-        function initializeGrid() {
-            const savedColors = JSON.parse(localStorage.getItem('pixelArtColors')) || new Array(gridSize * gridSize).fill('white');
-            for (let i = 0; i < gridSize * gridSize; i++) {
-                const cell = document.createElement('div');
-                cell.classList.add('cell');
-                cell.dataset.index = i;
-                cell.style.backgroundColor = savedColors[i];
-                cell.addEventListener('mousedown', (e) => {
-                    drawOnCell(cell);
-                });
-                grid.appendChild(cell);
-                cells[i] = cell;
-            }
-        }
-
-        // Добавление функциональности выбора цвета
-        document.querySelectorAll('.color-box').forEach(box => {
-            box.addEventListener('click', () => {
-                selectedColor = box.style.backgroundColor;
-
-            });
-        });
-
-        // Обработчики событий для рисования
-        grid.addEventListener('mousedown', (e) => {
-            if (e.target.classList.contains('cell')) {
-                isDrawing = true;
-                drawOnCell(e.target);
-            }
-        });
-
-        grid.addEventListener('mouseup', () => {
-            isDrawing = false;
-        });
-
-        grid.addEventListener('mouseleave', () => {
-            isDrawing = false;
-        });
-
-        // Убираем обработчики touch для мобильных устройств, чтобы не происходило свайпирование.
-
-        // Функция для рисования на клетке
-        function drawOnCell(cell) {
-            cell.style.backgroundColor = selectedColor;
-            updateLocalStorage(cell.dataset.index, selectedColor);
-            sendUpdate(cell.dataset.index, selectedColor); // Отправляем обновление всем клиентам
-        }
-
-        // Обновление localStorage
-        function updateLocalStorage(index, color) {
-            const savedColors = JSON.parse(localStorage.getItem('pixelArtColors')) || new Array(gridSize * gridSize).fill('white');
-            savedColors[index] = color;
-            localStorage.setItem('pixelArtColors', JSON.stringify(savedColors));
-        }
-
-        // Установка WebSocket для общения между клиентами
-        const ws = new WebSocket('ws://your-websocket-server-address'); // Укажите адрес вашего WebSocket сервера
-
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            if (data.action === 'update') {
-                const cell = cells[data.index];
-                if (cell) {
-                    cell.style.backgroundColor = data.color;
-                }
-            }
-        };
-
-        // Отправка обновлений на сервер
-        function sendUpdate(index, color) {
-            const data = {
-                action: 'update',
-                index: index,
-                color: color
-            };
-            ws.send(JSON.stringify(data));
-        }
-
-        // Инициализация поля
-        initializeGrid();
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
