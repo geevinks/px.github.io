@@ -4,49 +4,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel Battle</title>
+    <title>Pixel Painter</title>
     <style>
         body {
             display: flex;
             flex-direction: column;
             align-items: center;
+            margin: 0;
             height: 100vh;
             background-color: #f0f0f0;
-            margin: 0;
-            position: relative;
-            overflow: hidden; /* Скрытие переполнения */
+            overflow: hidden;
         }
 
         #palette {
-            position: fixed;
-            top: 10px;
             display: flex;
             gap: 5px;
-            z-index: 1000;
-            padding: 10px;
-            background-color: white;
-            border-radius: 15px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
         .color {
-            width: 25px;
-            height: 25px;
+            width: 30px;
+            height: 30px;
             cursor: pointer;
-        }
-
-        #container {
-            margin-top: 50px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            border: 1px solid #ccc;
         }
 
         #canvas {
             display: grid;
             grid-template-columns: repeat(100, 10px);
             grid-template-rows: repeat(100, 10px);
-            transform-origin: top left; /* Установка точки трансформации */
+            overflow: auto;
+            touch-action: none; /* Отключаем стандартный жест для предотвращения прокрутки */
+            border: 1px solid #bbb;
+            position: relative;
         }
 
         .pixel {
@@ -57,22 +46,17 @@
         }
 
         #scaleButtons {
-            position: fixed;
-            right: 10px;
-            top: 100px;
             display: flex;
-            flex-direction: column;
-            gap: 5px;
-            z-index: 1000;
+            gap: 10px;
+            margin: 10px;
         }
 
         .scale-btn {
             padding: 10px;
             cursor: pointer;
-            font-size: 20px;
-            background-color: white;
             border: 1px solid #ccc;
             border-radius: 5px;
+            background-color: white;
             transition: background-color 0.3s;
         }
 
@@ -85,31 +69,26 @@
 <body>
     <div id="palette">
         <div class="color" style="background-color: #FF0000;" onclick="setCurrentColor('#FF0000')"></div>
-        <div class="color" style="background-color: #FF7F00;" onclick="setCurrentColor('#FF7F00')"></div>
-        <div class="color" style="background-color: #FFFF00;" onclick="setCurrentColor('#FFFF00')"></div>
         <div class="color" style="background-color: #00FF00;" onclick="setCurrentColor('#00FF00')"></div>
-        <div class="color" style="background-color: #00FFFF;" onclick="setCurrentColor('#00FFFF')"></div>
         <div class="color" style="background-color: #0000FF;" onclick="setCurrentColor('#0000FF')"></div>
-        <div class="color" style="background-color: #4B0082;" onclick="setCurrentColor('#4B0082')"></div>
-        <div class="color" style="background-color: #9400D3;" onclick="setCurrentColor('#9400D3')"></div>
+        <div class="color" style="background-color: #FFFF00;" onclick="setCurrentColor('#FFFF00')"></div>
+        <div class="color" style="background-color: #FF00FF;" onclick="setCurrentColor('#FF00FF')"></div>
+        <div class="color" style="background-color: #00FFFF;" onclick="setCurrentColor('#00FFFF')"></div>
         <div class="color" style="background-color: #000000;" onclick="setCurrentColor('#000000')"></div>
         <div class="color" style="background-color: #FFFFFF;" onclick="setCurrentColor('#FFFFFF')"></div>
-        <div class="color" style="background-color: #808080;" onclick="setCurrentColor('#808080')"></div>
-    </div>
-    <div id="container">
-        <div id="canvas"></div>
     </div>
     <div id="scaleButtons">
         <button class="scale-btn" onclick="zoomOut()">−</button>
         <button class="scale-btn" onclick="zoomIn()">＋</button>
     </div>
+    <div id="canvas"></div>
 
     <script>
         const canvas = document.getElementById('canvas');
         let currentColor = '#000000';
         let scale = 10;
 
-        // Генерация массива пикселей
+        // Создание пикселей
         for (let i = 0; i < 10000; i++) {
             const pixel = document.createElement('div');
             pixel.classList.add('pixel');
@@ -127,20 +106,21 @@
             currentColor = color;
         }
 
-        // Масштабировать в большую сторону
+        // Масштабируем в большую сторону
         function zoomIn() {
-            scale += 2;
+            scale = Math.min(100, scale + 2);
             setCanvasScale(scale);
         }
 
-        // Масштабировать в меньшую сторону
+        // Масштабируем в меньшую сторону
         function zoomOut() {
             scale = Math.max(2, scale - 2);
             setCanvasScale(scale);
         }
 
-        // Сетка масштабирования
+        // Установка масштаба канваса
         function setCanvasScale(scale) {
+
             const pixels = document.querySelectorAll('.pixel');
             pixels.forEach(pixel => {
                 pixel.style.width = `${scale}px`;
@@ -148,34 +128,60 @@
             });
             canvas.style.gridTemplateColumns = `repeat(100, ${scale}px)`;
             canvas.style.gridTemplateRows = `repeat(100, ${scale}px)`;
-
-            // Ограничение стилей
-            const maxScale = 100; // Максимальное значение масштабирования
-            if (scale > maxScale) {
-                scale = maxScale; // Ограничение на максимальный масштаб
-            }
         }
 
-        // Масштабирование с помощью сенсорного слайдера
-        let lastScale = scale; // Для хранения последнего значения
-        canvas.addEventListener('touchmove', (event) => {
-            event.preventDefault();
-            if (event.targetTouches.length === 2) { // Используем два пальца для масштабирования
-                const touch1 = event.targetTouches[0];
-                const touch2 = event.targetTouches[1];
-                const distance = Math.sqrt(
-                    Math.pow(touch2.clientX - touch1.clientX, 2) +
-                    Math.pow(touch2.clientY - touch1.clientY, 2)
-                );
+        // Перемещение канваса с помощью жестов
+        let isDrawing = false;
+        let startX, startY;
 
-                // Установка нового масштаба
-                scale = Math.max(2, Math.min(300, Math.floor(distance / 10))); // Вычисление масштаба по расстоянию между пальцами
-                setCanvasScale(scale);
-                lastScale = scale; // Обновление последнего масштаба
+        canvas.addEventListener('mousedown', (event) => {
+            isDrawing = true;
+            startX = event.clientX;
+            startY = event.clientY;
+        });
+
+        canvas.addEventListener('mousemove', (event) => {
+            if (isDrawing) {
+                const dx = event.clientX - startX;
+                const dy = event.clientY - startY;
+                canvas.scrollLeft -= dx;
+                canvas.scrollTop -= dy;
+                startX = event.clientX;
+                startY = event.clientY;
             }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isDrawing = false;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isDrawing = false;
+        });
+
+        // Перемещение канваса на мобильных устройствах
+        canvas.addEventListener('touchstart', (event) => {
+            isDrawing = true;
+            startX = event.touches[0].clientX;
+            startY = event.touches[0].clientY;
+        });
+
+        canvas.addEventListener('touchmove', (event) => {
+            if (isDrawing) {
+                const dx = event.touches[0].clientX - startX;
+                const dy = event.touches[0].clientY - startY;
+                canvas.scrollLeft -= dx;
+                canvas.scrollTop -= dy;
+                startX = event.touches[0].clientX;
+                startY = event.touches[0].clientY;
+                event.preventDefault(); // Отключаем скроллинг страницы
+            }
+        });
+
+        canvas.addEventListener('touchend', () => {
+            isDrawing = false;
         });
     </script>
 </body>
 
 </html>
-
