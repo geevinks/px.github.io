@@ -20,26 +20,29 @@
             gap: 5px;
             z-index: 1000;
         }
-        .color {
-            width: 30px;
-            height: 30px;
-            cursor: pointer;
+        .color { 
+            width: 30px; 
+            height: 30px; 
+            cursor: pointer; 
         }
         #container {
             overflow: auto; /* Добавлено для прокрутки при увеличении поля */
-            border: 1px solid #000;
+            border: 1px solid #000; 
             margin-top: 50px; /* Расстояние от палитры */
             width: 320px; /* Ширина контейнера */
             height: 320px; /* Высота контейнера */
+            display: flex; /* Используйте flexbox для центрирования canvas */
+            justify-content: center; /* Центрирование по горизонтали */
+            align-items: center; /* Центрирование по вертикали */
         }
         #canvas {
             display: grid;
-            grid-template-columns: repeat(10, 30px); /* 10 пикселей, увеличенные размеры */
-            grid-template-rows: repeat(10, 30px); /* 10 пикселей, увеличенные размеры */
+            grid-template-columns: repeat(100, 10px); /* 100 пикселей по 10px */
+            grid-template-rows: repeat(100, 10px); /* 100 пикселей по 10px */
         }
         .pixel {
-            width: 30px; /* Увеличенный размер пикселя */
-            height: 30px; /* Увеличенный размер пикселя */
+            width: 10px; /* Начальный размер пикселя */
+            height: 10px; /* Начальный размер пикселя */
             border: 1px solid rgba(0, 0, 0, 0.1);
             background-color: #ffffff; /* Начальный цвет */
         }
@@ -66,7 +69,7 @@
         let currentColor = '#000000'; // Цвет по умолчанию
 
         // Генерация массива пикселей
-        for (let i = 0; i < 100; i++) { // Уменьшено количество пикселей для просмотра на мобильных устройствах
+        for (let i = 0; i < 10000; i++) { // 100x100 пикселей
             const pixel = document.createElement('div');
             pixel.classList.add('pixel');
             pixel.addEventListener('click', () => fillPixel(pixel));
@@ -83,15 +86,15 @@
             currentColor = color;
         }
 
-        // Масштабирование при помощи свайпов (для мобильных устройств)
-        let scale = 30; // Начальный масштаб
+        // Масштабирование при помощи колесика мыши (для мобильных устройств)
+        let scale = 10; // Начальный масштаб
         canvas.addEventListener('wheel', (event) => {
+            
             event.preventDefault();
             if (event.deltaY < 0) {
-                scale += 5; // Увеличение масштаба
+                scale += 2; // Увеличение масштаба
             } else {
-
-                scale = Math.max(10, scale - 5); // Уменьшение масштаба, но не меньше 10
+                scale = Math.max(2, scale - 2); // Уменьшение масштаба, но не меньше 2
             }
             setCanvasScale(scale);
         });
@@ -102,9 +105,10 @@
                 pixel.style.width = `${scale}px`;
                 pixel.style.height = `${scale}px`;
             });
-            canvas.style.gridTemplateColumns = `repeat(10, ${scale}px)`; // Измените на 10, чтобы все пиксели помещались в контейнер
-            canvas.style.gridTemplateRows = `repeat(10, ${scale}px)`; // Измените на 10, чтобы все пиксели помещались в контейнер
+            canvas.style.gridTemplateColumns = `repeat(100, ${scale}px)`; // Устанавливаем 100 колонок
+            canvas.style.gridTemplateRows = `repeat(100, ${scale}px)`; // Устанавливаем 100 строк
         }
     </script>
 </body>
 </html>
+
