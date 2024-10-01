@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,7 +14,9 @@
             background-color: #f0f0f0;
             margin: 0;
             position: relative;
+            overflow: hidden; /* Скрытие переполнения */
         }
+
         #palette {
             position: fixed;
             top: 10px;
@@ -25,28 +28,34 @@
             border-radius: 15px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
+
         .color {
             width: 25px;
             height: 25px;
             cursor: pointer;
         }
+
         #container {
             margin-top: 50px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
+
         #canvas {
             display: grid;
             grid-template-columns: repeat(100, 10px);
             grid-template-rows: repeat(100, 10px);
+            transform-origin: top left; /* Установка точки трансформации */
         }
+
         .pixel {
             width: 10px;
             height: 10px;
             border: 1px solid rgba(0, 0, 0, 0.1);
             background-color: #ffffff;
         }
+
         #scaleButtons {
             position: fixed;
             right: 10px;
@@ -56,6 +65,7 @@
             gap: 5px;
             z-index: 1000;
         }
+
         .scale-btn {
             padding: 10px;
             cursor: pointer;
@@ -65,11 +75,13 @@
             border-radius: 5px;
             transition: background-color 0.3s;
         }
+
         .scale-btn:hover {
             background-color: #e0e0e0;
         }
     </style>
 </head>
+
 <body>
     <div id="palette">
         <div class="color" style="background-color: #FF0000;" onclick="setCurrentColor('#FF0000')"></div>
@@ -106,7 +118,6 @@
         }
 
         // Функция заполнения пикселя
-
         function fillPixel(pixel) {
             pixel.style.backgroundColor = currentColor;
         }
@@ -137,15 +148,34 @@
             });
             canvas.style.gridTemplateColumns = `repeat(100, ${scale}px)`;
             canvas.style.gridTemplateRows = `repeat(100, ${scale}px)`;
+
+            // Ограничение стилей
+            const maxScale = 100; // Максимальное значение масштабирования
+            if (scale > maxScale) {
+                scale = maxScale; // Ограничение на максимальный масштаб
+            }
         }
 
         // Масштабирование с помощью сенсорного слайдера
+        let lastScale = scale; // Для хранения последнего значения
         canvas.addEventListener('touchmove', (event) => {
             event.preventDefault();
-            let touch = event.targetTouches[0];
-            scale = touch.clientY / 100;
-            setCanvasScale(Math.max(2, Math.min(100, scale)));
+            if (event.targetTouches.length === 2) { // Используем два пальца для масштабирования
+                const touch1 = event.targetTouches[0];
+                const touch2 = event.targetTouches[1];
+                const distance = Math.sqrt(
+                    Math.pow(touch2.clientX - touch1.clientX, 2) +
+                    Math.pow(touch2.clientY - touch1.clientY, 2)
+                );
+
+                // Установка нового масштаба
+                scale = Math.max(2, Math.min(300, Math.floor(distance / 10))); // Вычисление масштаба по расстоянию между пальцами
+                setCanvasScale(scale);
+                lastScale = scale; // Обновление последнего масштаба
+            }
         });
     </script>
 </body>
+
 </html>
+
