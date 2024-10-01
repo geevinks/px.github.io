@@ -25,12 +25,15 @@
             height: 30px; 
             cursor: pointer; 
         }
+        #container {
+            overflow: auto; /* Добавлено для прокрутки при увеличении поля */
+            border: 1px solid #000; 
+            margin-top: 50px; /* Расстояние от палитры */
+        }
         #canvas {
             display: grid;
             grid-template-columns: repeat(100, 10px);
             grid-template-rows: repeat(100, 10px);
-            border: 1px solid #000;
-            margin-top: 50px; /* Добавлено для расстояния от палитры */
         }
         .pixel {
             width: 10px;
@@ -53,7 +56,9 @@
         <div class="color" style="background-color: #000000;" onclick="setCurrentColor('#000000')"></div>
         <div class="color" style="background-color: #FFFFFF;" onclick="setCurrentColor('#FFFFFF')"></div>
     </div>
-    <div id="canvas"></div>
+    **<div id="container">**
+        <div id="canvas"></div>
+    **</div>**
     <script>
         const canvas = document.getElementById('canvas');
         let currentColor = '#000000'; // Цвет по умолчанию
@@ -94,9 +99,11 @@
                 pixel.style.width = `${scale}px`;
                 pixel.style.height = `${scale}px`;
             });
+            
             canvas.style.gridTemplateColumns = `repeat(100, ${scale}px)`;
             canvas.style.gridTemplateRows = `repeat(100, ${scale}px)`;
         }
     </script>
 </body>
 </html>
+
