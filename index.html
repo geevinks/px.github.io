@@ -12,6 +12,7 @@
             height: 100vh;
             background-color: #f0f0f0;
             margin: 0;
+            position: relative;
         }
         #palette {
             position: fixed;
@@ -19,32 +20,53 @@
             display: flex;
             gap: 5px;
             z-index: 1000;
+            padding: 10px;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-        .color { 
-            width: 30px; 
-            height: 30px; 
-            cursor: pointer; 
+        .color {
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
         }
         #container {
-            overflow: auto; /* Добавлено для прокрутки при увеличении поля */
-            border: 1px solid #000; 
-            margin-top: 50px; /* Расстояние от палитры */
-            width: 320px; /* Ширина контейнера */
-            height: 320px; /* Высота контейнера */
-            display: flex; /* Используйте flexbox для центрирования canvas */
-            justify-content: center; /* Центрирование по горизонтали */
-            align-items: center; /* Центрирование по вертикали */
+            margin-top: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         #canvas {
             display: grid;
-            grid-template-columns: repeat(100, 10px); /* 100 пикселей по 10px */
-            grid-template-rows: repeat(100, 10px); /* 100 пикселей по 10px */
+            grid-template-columns: repeat(100, 10px);
+            grid-template-rows: repeat(100, 10px);
         }
         .pixel {
-            width: 10px; /* Начальный размер пикселя */
-            height: 10px; /* Начальный размер пикселя */
+            width: 10px;
+            height: 10px;
             border: 1px solid rgba(0, 0, 0, 0.1);
-            background-color: #ffffff; /* Начальный цвет */
+            background-color: #ffffff;
+        }
+        #scaleButtons {
+            position: fixed;
+            right: 10px;
+            top: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            z-index: 1000;
+        }
+        .scale-btn {
+            padding: 10px;
+            cursor: pointer;
+            font-size: 20px;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .scale-btn:hover {
+            background-color: #e0e0e0;
         }
     </style>
 </head>
@@ -60,16 +82,23 @@
         <div class="color" style="background-color: #9400D3;" onclick="setCurrentColor('#9400D3')"></div>
         <div class="color" style="background-color: #000000;" onclick="setCurrentColor('#000000')"></div>
         <div class="color" style="background-color: #FFFFFF;" onclick="setCurrentColor('#FFFFFF')"></div>
+        <div class="color" style="background-color: #808080;" onclick="setCurrentColor('#808080')"></div>
     </div>
     <div id="container">
         <div id="canvas"></div>
     </div>
+    <div id="scaleButtons">
+        <button class="scale-btn" onclick="zoomOut()">−</button>
+        <button class="scale-btn" onclick="zoomIn()">＋</button>
+    </div>
+
     <script>
         const canvas = document.getElementById('canvas');
-        let currentColor = '#000000'; // Цвет по умолчанию
+        let currentColor = '#000000';
+        let scale = 10;
 
         // Генерация массива пикселей
-        for (let i = 0; i < 10000; i++) { // 100x100 пикселей
+        for (let i = 0; i < 10000; i++) {
             const pixel = document.createElement('div');
             pixel.classList.add('pixel');
             pixel.addEventListener('click', () => fillPixel(pixel));
@@ -77,6 +106,7 @@
         }
 
         // Функция заполнения пикселя
+
         function fillPixel(pixel) {
             pixel.style.backgroundColor = currentColor;
         }
@@ -86,29 +116,36 @@
             currentColor = color;
         }
 
-        // Масштабирование при помощи колесика мыши (для мобильных устройств)
-        let scale = 10; // Начальный масштаб
-        canvas.addEventListener('wheel', (event) => {
-            
-            event.preventDefault();
-            if (event.deltaY < 0) {
-                scale += 2; // Увеличение масштаба
-            } else {
-                scale = Math.max(2, scale - 2); // Уменьшение масштаба, но не меньше 2
-            }
+        // Масштабировать в большую сторону
+        function zoomIn() {
+            scale += 2;
             setCanvasScale(scale);
-        });
+        }
 
+        // Масштабировать в меньшую сторону
+        function zoomOut() {
+            scale = Math.max(2, scale - 2);
+            setCanvasScale(scale);
+        }
+
+        // Сетка масштабирования
         function setCanvasScale(scale) {
             const pixels = document.querySelectorAll('.pixel');
             pixels.forEach(pixel => {
                 pixel.style.width = `${scale}px`;
                 pixel.style.height = `${scale}px`;
             });
-            canvas.style.gridTemplateColumns = `repeat(100, ${scale}px)`; // Устанавливаем 100 колонок
-            canvas.style.gridTemplateRows = `repeat(100, ${scale}px)`; // Устанавливаем 100 строк
+            canvas.style.gridTemplateColumns = `repeat(100, ${scale}px)`;
+            canvas.style.gridTemplateRows = `repeat(100, ${scale}px)`;
         }
+
+        // Масштабирование с помощью сенсорного слайдера
+        canvas.addEventListener('touchmove', (event) => {
+            event.preventDefault();
+            let touch = event.targetTouches[0];
+            scale = touch.clientY / 100;
+            setCanvasScale(Math.max(2, Math.min(100, scale)));
+        });
     </script>
 </body>
 </html>
-
