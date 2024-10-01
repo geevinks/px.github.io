@@ -36,6 +36,8 @@
             touch-action: none; /* Отключаем стандартный жест для предотвращения прокрутки */
             border: 1px solid #bbb;
             position: relative;
+            width: 100%; /* Установим ширину канваса по 100% */
+            height: 100%; /* Установим высоту канваса по 100% */
         }
 
         .pixel {
@@ -115,12 +117,12 @@
         // Масштабируем в меньшую сторону
         function zoomOut() {
             scale = Math.max(2, scale - 2);
+
             setCanvasScale(scale);
         }
 
         // Установка масштаба канваса
         function setCanvasScale(scale) {
-
             const pixels = document.querySelectorAll('.pixel');
             pixels.forEach(pixel => {
                 pixel.style.width = `${scale}px`;
@@ -134,10 +136,12 @@
         let isDrawing = false;
         let startX, startY;
 
+        // Обработчики событий для перемещения мыши
         canvas.addEventListener('mousedown', (event) => {
             isDrawing = true;
             startX = event.clientX;
             startY = event.clientY;
+            canvas.style.cursor = 'grabbing'; // Изменяем курсор
         });
 
         canvas.addEventListener('mousemove', (event) => {
@@ -153,10 +157,12 @@
 
         canvas.addEventListener('mouseup', () => {
             isDrawing = false;
+            canvas.style.cursor = 'grab'; // Восстанавливаем курсор
         });
 
         canvas.addEventListener('mouseleave', () => {
             isDrawing = false;
+            canvas.style.cursor = 'grab'; // Восстанавливаем курсор
         });
 
         // Перемещение канваса на мобильных устройствах
@@ -164,6 +170,7 @@
             isDrawing = true;
             startX = event.touches[0].clientX;
             startY = event.touches[0].clientY;
+            canvas.style.cursor = 'grabbing'; // Изменяем курсор
         });
 
         canvas.addEventListener('touchmove', (event) => {
@@ -180,6 +187,7 @@
 
         canvas.addEventListener('touchend', () => {
             isDrawing = false;
+            canvas.style.cursor = 'grab'; // Восстанавливаем курсор
         });
     </script>
 </body>
